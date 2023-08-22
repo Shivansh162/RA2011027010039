@@ -1,0 +1,29 @@
+from flask import Flask, request, jsonify
+import requests
+import asyncio
+
+app = Flask(_name_)
+
+async def fetch_url(url):
+    try:
+        response = await asyncio.wait_for(requests.get(url), timeout=0.5)
+        if response.status_code == 200:
+            return response.json().get("numbers", [])
+    except:
+        pass
+    return []
+
+@app.route('/numbers')
+def get_numbers():
+    urls = request.args.getlist('url')
+
+    loop = asyncio.get_event_loop()
+    tasks = [fetch_url(url) for url in urls]
+    responses = loop.run_until_complete(asyncio.gather(*tasks))
+
+    merged_numbers = sorted(set(number for sublist in responses for number in sublist))
+
+    return jsonify(numbers=merged_numbers)
+
+if _name_ == '_main_':
+    app.run(port=8008)
